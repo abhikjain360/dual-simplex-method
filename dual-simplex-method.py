@@ -15,18 +15,13 @@ def calculateProfit(table, Z, basic_coeff, total_count):
     return np.array(P)
 
 
-# method to check optimality condition for simplex method
-def optimalCondition(P, choice):
-    if choice == 'min':
-        for i in P:
-            if i < 0:
-                return True
-        return False
-    else:
-        for i in P:
-            if i > 0:
-                return True
-        return False
+# method to check optimality condition for dual-simplex method
+def optimalCondition(table):
+    B = table[:,-1]
+    for i in B:
+        if i[0] < 0:
+            return True
+    return False
     
 
 # method to perform Gauss-Jordan Elimination on the simplex table
@@ -101,5 +96,36 @@ if __name__ == '__main__' :
     equalities = np.array(equalities)
     inequalities = np.array(inequalities)
     B = np.array(B)
+    B = np.transpose(B)
 
+
+    '''
+    converting in standard form
+    '''
+
+    # adding spaces for extra variables
+    equalities = np.pad(equalities, ((0,0), (0,n1+n2)), 'constant', constant_values=0)
+    inequalities = np.pad(inequalities, ((0,0), (0,n1+n2)), 'constant', constant_values=0)
+    Z = np.pad(Z, (0, n1+n2), 'constant', constant_values=0)
+
+    # creating table
+    table = np.append(inequalities, equalities, axis=0)
+
+    for i in range(n1 + n2):
+        table[i][var_count + i] = 1
     
+    '''
+    doing optimization
+    '''
+
+    # array to keep track of basic variables, initially all slack variables
+    basic_coeff = np.pad(np.zeros(var_count),(0,n1+n2),'constant',constant_values=1)
+
+    # applying dual-simplex method recursively
+    while(optimalCondition(table)):
+
+        # getting the leaving variable
+        
+
+        # calculating profit
+        P = calculateProfit(table, Z, basic_coeff, var_count+n1+n2)
