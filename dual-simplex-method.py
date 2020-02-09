@@ -104,13 +104,24 @@ if __name__ == '__main__' :
     '''
 
     # adding spaces for extra variables
-    equalities = np.pad(equalities, ((0,0), (0,n1+n2)), 'constant', constant_values=0)
-    inequalities = np.pad(inequalities, ((0,0), (0,n1+n2)), 'constant', constant_values=0)
+    if n1 != 0:
+        equalities = np.pad(equalities, ((0,0), (0,n1+n2)), 'constant', constant_values=0)
+    if n2 != 0:        
+        inequalities = np.pad(inequalities, ((0,0), (0,n1+n2)), 'constant', constant_values=0)
     Z = np.pad(Z, (0, n1+n2), 'constant', constant_values=0)
 
-    # creating table
-    table = np.append(inequalities, equalities, axis=0)
+    # generating the simplex table
+    if n1 == 0:
+        table = equalities
+    elif n2 == 0:
+        table = inequalities
+    else:
+        table = np.append(inequalities, equalities, axis=0)
+    B = np.reshape(B, (n1+n2, 1))
+    table = np.append(table, B, axis=1)
+    table = table.astype('float')
 
+    # finally adding extra (slack) variables
     for i in range(n1 + n2):
         table[i][var_count + i] = 1
     
@@ -125,7 +136,30 @@ if __name__ == '__main__' :
     while(optimalCondition(table)):
 
         # getting the leaving variable
-        
+        B = table[:, -1].flatten()
+        row_index = np.argmin(B)
 
         # calculating profit
         P = calculateProfit(table, Z, basic_coeff, var_count+n1+n2)
+
+        # getting the entering variable
+        col_index = -1
+        ratio = np.devide(P, table[row_index])
+        min_ratio = np.max(ratio)
+        for i in range(n1+n2+var_count):
+            if ratio[i] > 0 and ratio[i] < min_ratio:
+                min_ratio = ratio[i]
+                col_index = i
+
+        if col_index == -1:
+            print("No Solutions!!")
+            exit(0)
+
+        # performing the gauss jordan elimination
+        table = gauss_jordan_elimination(table, row_index, col_index)
+
+        # updating the basic coefficients
+        basic_coeff[row_index] = col_index
+
+    print(table)
+    print(basic_coeff)
