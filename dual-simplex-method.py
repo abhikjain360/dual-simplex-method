@@ -19,7 +19,7 @@ def calculateProfit(table, Z, basic_coeff, total_count):
 def optimalCondition(table):
     B = table[:,-1]
     for i in B:
-        if i[0] < 0:
+        if i < 0:
             return True
     return False
     
@@ -104,9 +104,9 @@ if __name__ == '__main__' :
     '''
 
     # adding spaces for extra variables
-    if n1 != 0:
+    if n2 != 0:
         equalities = np.pad(equalities, ((0,0), (0,n1+n2)), 'constant', constant_values=0)
-    if n2 != 0:        
+    if n1 != 0:        
         inequalities = np.pad(inequalities, ((0,0), (0,n1+n2)), 'constant', constant_values=0)
     Z = np.pad(Z, (0, n1+n2), 'constant', constant_values=0)
 
@@ -125,12 +125,14 @@ if __name__ == '__main__' :
     for i in range(n1 + n2):
         table[i][var_count + i] = 1
     
+    
     '''
     doing optimization
     '''
 
     # array to keep track of basic variables, initially all slack variables
-    basic_coeff = np.pad(np.zeros(var_count),(0,n1+n2),'constant',constant_values=1)
+    basic_index = np.array(list(range(var_count,var_count+n1+n2)))
+    basic_coeff = np.array([Z[i] for i in basic_index])
 
     # applying dual-simplex method recursively
     while(optimalCondition(table)):
@@ -144,14 +146,18 @@ if __name__ == '__main__' :
 
         # getting the entering variable
         col_index = -1
-        ratio = np.devide(P, table[row_index])
-        min_ratio = np.max(ratio)
+        ratio = np.divide(P, table[row_index,:-1])
+        min_ratio = np.sort(ratio)[0]
         for i in range(n1+n2+var_count):
-            if ratio[i] > 0 and ratio[i] < min_ratio:
+            if ratio[i] < 0 and ratio[i] > min_ratio:
                 min_ratio = ratio[i]
                 col_index = i
 
         if col_index == -1:
+            print(table)
+            print(P)
+            print(ratio)
+            print(basic_index)
             print("No Solutions!!")
             exit(0)
 
@@ -159,7 +165,8 @@ if __name__ == '__main__' :
         table = gauss_jordan_elimination(table, row_index, col_index)
 
         # updating the basic coefficients
-        basic_coeff[row_index] = col_index
+        basic_index[row_index] = col_index
+        basic_coeff[row_index] = Z[col_index]
 
     print(table)
-    print(basic_coeff)
+    print(basic_index)
