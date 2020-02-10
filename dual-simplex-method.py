@@ -15,6 +15,20 @@ def calculateProfit(table, Z, basic_coeff, total_count):
     return np.array(P)
 
 
+# method to get col_index of the entering variable
+def get_col_index(table, P, row_index):
+    col_index = -1
+    temp = abs(P[0]/table[row_index, 0])
+    for i in range(len(P)-1, -1, -1):
+        if table[row_index, i] < 0:
+            ratio = abs(P[i]/table[row_index, i])
+            if ratio <= temp:
+                temp = ratio
+                col_index = i
+
+    return col_index
+
+
 # method to check optimality condition for dual-simplex method
 def optimalCondition(table):
     B = table[:,-1]
@@ -145,14 +159,7 @@ if __name__ == '__main__' :
         P = calculateProfit(table, Z, basic_coeff, var_count+n1+n2)
 
         # getting the entering variable
-        col_index = -1
-        ratio = np.divide(P, table[row_index,:-1])
-        min_ratio = np.sort(ratio)[0]
-        for i in range(n1+n2+var_count):
-            if ratio[i] < 0 and ratio[i] > min_ratio:
-                min_ratio = ratio[i]
-                col_index = i
-
+        col_index = get_col_index(table, P, row_index)
         if col_index == -1:
             print(table)
             print(P)
@@ -160,6 +167,10 @@ if __name__ == '__main__' :
             print(basic_index)
             print("No Solutions!!")
             exit(0)
+
+        print(table)
+        print(P)
+        print(basic_coeff)
 
         # performing the gauss jordan elimination
         table = gauss_jordan_elimination(table, row_index, col_index)
